@@ -1,0 +1,13 @@
+services:
+  bs-database:
+    image: mongo
+    command: --quiet --syslog
+    expose:
+      - 27017
+    volumes:
+      - bs-database:/data/db
+      - mongo-config:/data/configdb
+
+volumes:
+  bs-database:
+  mongo-config:
