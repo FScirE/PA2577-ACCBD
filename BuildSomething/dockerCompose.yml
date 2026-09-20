@@ -1,6 +1,18 @@
 services:
+  bs-frontend:
+    image: bsfrontend
+    ports:
+      - 8000:3000
+    volumes:
+      - ./bsFrontend/src:/app/src
+    depends_on:
+      - bs-database
+    build:
+      context: ./bsFrontend
+
   bs-database:
     image: mongo
+    restart: always
     command: --quiet --syslog
     expose:
       - 27017
