@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Frontend for the BuildSomething app",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon -L src/index.js"
   },
   "contributors": [
     "Eric Soleke Falkbring",
