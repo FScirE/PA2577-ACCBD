@@ -4,20 +4,23 @@ const fetch = require('node-fetch')
 const mongoose = require('mongoose')
 
 const PORT = 3000
-const MONGO_URL = process.env.MONGO_URL || 'mongodb://bs-database:27017/bsdb'
+const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
 const app = express()
 
 // Connect to database --------------------------------------
-const connectDb = () => { mongoose.connect(MONGO_URL).then(() => console.log('Connected to MongoDB')) }
-
-
-connectDb()
+mongoose.connect(MONGO_URL).then(
+  console.log('Connected to MongoDB')
+)
 
 const Note = mongoose.model('Note', new mongoose.Schema({
   text: String,
-  createdAt: { type: Date, default: Date.now }
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 }))
 
+// Set up express -------------------------------------------
 app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')));
 
