@@ -43,8 +43,12 @@ const createEntry = async (req, res) => {
 const calculateMean = async (req, res) => {
   const entry = await Entry.findOne({ entryId: req.params.entryId })
 
-  if (!entry || entry.values.length === 0) {
-    return res.status(404).json({ error: 'entry not found or array empty' })
+  if (!entry) {
+    return res.status(404).json({ error: 'entry not found' })
+  }
+
+  if (entry.values.length === 0) {
+    return res.status(404).json({ error: 'array is empty' })
   }
 
   const sum = entry.values.reduce((total, value) => total + value, 0)
