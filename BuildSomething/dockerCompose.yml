@@ -12,8 +12,6 @@ services:
 
   bs-mean:
     image: bsmean
-    ports:
-      - 8001:3000
     volumes:
       - ./bsMean/src:/app/src
     depends_on:

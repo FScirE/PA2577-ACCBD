@@ -1,30 +1,68 @@
-const form = document.getElementById('note-form')
-const input = document.getElementById('note-text')
-const list = document.getElementById('note-list')
+const form = document.getElementById('data-form')
+const nameInput = document.getElementById('name-input')
+const numberInput = document.getElementById('number-input')
+const numberList = document.getElementById('number-list')
+const addButton = document.getElementById('add-button')
+const objectList = document.getElementById('object-list')
 
-const render = notes => {
-  list.innerHTML = ''
-  notes.forEach(note => {
+var numbers = []
+var objects = []
+
+const MAX_VALUE = 10000
+const MIN_VALUE = -10000
+
+const renderObjects = () => {
+  objectList.innerHTML = ''
+  objects.forEach(object => {
     const li = document.createElement('li')
-    li.textContent = `${note.text} (${new Date(note.createdAt).toLocaleString()})`
-    list.appendChild(li)
+    li.textContent = `${object.name} -- ${Array(object.numbers).join(', ')}`
+    objectList.appendChild(li)
   })
 }
-
-const loadNotes = async () => {
-  const res = await fetch('/api/notes')
-  render(await res.json())
+const renderNumbers = () => {
+  numberList.innerHTML = numbers.join(", ")
 }
 
-form.addEventListener('submit', async e => {
+const loadObjects = async () => {
+  const res = await fetch('/api/objects')
+  objects = await res.json()
+  renderObjects()
+}
+
+const addNumber = () => {
+  if (!numberInput.value)
+    return false
+
+  const value = numberInput.value
+  numbers.push(Math.min(MAX_VALUE, Math.max(value, MIN_VALUE)))
+  numberInput.value = ""
+  renderNumbers()
+  return true
+}
+
+form.addEventListener('submit', async (e) => {
   e.preventDefault()
-  await fetch('/api/notes', {
+
+  // enter should add number, and if no number it should send
+  if (addNumber())
+    return
+
+  // fails if no name or numbers
+  if (!nameInput.value || numbers.length === 0) {
+    window.alert("Must enter name and some numbers")
+    return
+  }
+
+  await fetch('/api/objects', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: input.value })
+    body: JSON.stringify({ name: nameInput.value, numbers: numbers })
   })
-  input.value = ''
-  loadNotes()
+  nameInput.value = ''
+  numbers = []
+  renderNumbers()
+  loadObjects()
 })
+addButton.addEventListener('click', addNumber)
 
-loadNotes()
+loadObjects()
