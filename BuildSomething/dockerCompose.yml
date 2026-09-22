@@ -10,6 +10,17 @@ services:
     build:
       context: ./bsFrontend
 
+  bs-mean:
+    image: bsmean
+    ports:
+      - 8001:3000
+    volumes:
+      - ./bsMean/src:/app/src
+    depends_on:
+      - bs-database
+    build:
+      context: ./bsMean
+
   bs-database:
     image: mongo
     restart: always
