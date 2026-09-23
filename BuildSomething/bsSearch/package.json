@@ -1,0 +1,18 @@
+{
+  "name": "bssearch",
+  "version": "1.0.0",
+  "description": "Search microservice for the BuildSomething app",
+  "scripts": {
+    "dev": "nodemon -L src/index.js"
+  },
+  "contributors": [
+    "Eric Soleke Falkbring",
+    "Marcus Thomaeus",
+    "Axel Andersson (Past Contributor)"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.1",
+    "mongoose": "^6.3.3"
+  }
+}

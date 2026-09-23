@@ -19,6 +19,15 @@ services:
     build:
       context: ./bsMean
 
+  bs-search:
+    image: bssearch
+    volumes:
+      - ./bsSearch/src:/app/src
+    depends_on:
+      - bs-database
+    build:
+      context: ./bsSearch
+
   bs-database:
     image: mongo
     restart: always
