@@ -23,15 +23,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 const startPage = (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html'))
 
 const listObjects = async (req, res) => {
-  const bsObjects = await Objects.aggregate([
-    {
-      $project: {
-        _id: 0,
-        name: 1,
-        numberCount: { $size: '$numbers' }
-      }
+  // only send name and length of number array
+  const bsObjects = await Objects.aggregate([{
+    $project: {
+      _id: 0,
+      name: 1,
+      numberCount: { $size: '$numbers' }
     }
-  ])
+  }])
 
   res.json(bsObjects)
 }
