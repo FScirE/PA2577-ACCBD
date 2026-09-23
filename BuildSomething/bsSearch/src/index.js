@@ -26,8 +26,8 @@ const searchName = async (req, res) => {
 
 // Routes ---------------------------------------------------
 var router = express.Router()
-router.get('number/:number', searchNumber)
-router.get('name/:name', searchName)
+router.get('/number/:number', searchNumber)
+router.get('/name/:name', searchName)
 app.use('/', router)
 
 // Start service --------------------------------------------
