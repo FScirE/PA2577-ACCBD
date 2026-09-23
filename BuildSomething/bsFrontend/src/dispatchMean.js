@@ -1,7 +1,7 @@
 const fetch = require('node-fetch')
 const Objects = require('./model')
 
-const MEAN_API_URL = 'http://bs-mean:3000'
+const MEAN_API_URL = 'http://bs-mean/api/mean:3000'
 
 const calculateMeans = async () => {
   const ids = (await Objects.distinct('_id')).map(id => id.toString())

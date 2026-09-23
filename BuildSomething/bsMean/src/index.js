@@ -31,7 +31,7 @@ const calculateMean = async (req, res) => {
 
 // Routes ---------------------------------------------------
 var router = express.Router()
-router.get('/:id', calculateMean)
+router.get('/api/mean/:id', calculateMean)
 app.use('/', router)
 
 // Start service --------------------------------------------
