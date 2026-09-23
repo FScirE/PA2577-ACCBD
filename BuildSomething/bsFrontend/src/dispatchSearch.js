@@ -1,5 +1,4 @@
 const fetch = require('node-fetch')
-const Objects = require('./model')
 
 const SEARCH_API_URL = 'http://bs-search:3000'
 
