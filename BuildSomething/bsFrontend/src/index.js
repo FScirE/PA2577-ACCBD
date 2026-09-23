@@ -4,6 +4,9 @@ const mongoose = require('mongoose')
 
 const Objects = require('./model')
 const calculateMeans = require('./dispatchMean')
+const {searchNumber , searchName} = require('./dispatchSearch')
+
+
 
 const PORT = 3000
 const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
@@ -42,11 +45,26 @@ const getMean = async (req, res) => {
   res.json({ mean: totalMean, amt: validMeans.length })
 }
 
+const getSearchNumber = async (req, res) => {
+  const result = await searchNumber(req.params.number)
+
+  res.json(result)
+}
+
+const getSearchName = async (req, res) => {
+  const result = await searchName(req.params.name)
+
+  res.json(result)
+}
+
 var router = express.Router()
 router.get('/', startPage)
 router.get('/api/objects', listObjects)
 router.post('/api/objects', createObject)
 router.get('/api/mean', getMean)
+router.get('/api/search/number/:number', getSearchNumber)
+router.get('/api/search/name/:name', getSearchName)
+
 app.use('/', router)
 
 // Start app ------------------------------------------------

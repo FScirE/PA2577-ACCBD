@@ -5,6 +5,13 @@ const numberList = document.getElementById('number-list')
 const addButton = document.getElementById('add-button')
 const meanButton = document.getElementById('mean-button')
 const objectList = document.getElementById('object-list')
+const searchNumberInput = document.getElementById('search-number-input')
+const searchNameInput = document.getElementById('search-name-input')
+const searchNumberButton = document.getElementById('search-number-button')
+const searchNameButton = document.getElementById('search-name-button')
+
+
+
 
 var numbers = []
 var objects = []
@@ -71,6 +78,34 @@ meanButton.addEventListener('click', async (e) => {
   const response = await fetch('/api/mean')
   const result = await response.json()
   window.alert(`Mean: ${result.mean} (from ${result.amt} valid entries)`)
+})
+
+searchNumberButton.addEventListener("click" , async (e) => {
+  const number = searchNumberInput.value
+
+  if (!number) {
+    window.alert("Enter a valid number")
+    return
+  }
+
+  const response = await fetch('/api/search/number/' + number)
+  const result = await response.json()
+
+  window.alert(JSON.stringify(result))
+})
+
+searchNameButton.addEventListener("click" , async (e) => {
+  const name = searchNameInput.value
+
+  if (!name) {
+    window.alert("Enter a valid name")
+    return
+  }
+
+  const response = await fetch('/api/search/name/' + name)
+  const result = await response.json()
+
+  window.alert(JSON.stringify(result))
 })
 
 loadObjects()
