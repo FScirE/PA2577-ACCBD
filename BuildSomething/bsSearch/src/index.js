@@ -14,20 +14,20 @@ mongoose.connect(MONGO_URL).then(
 // Search ---------------------------------------------------
 const searchNumber = async (req, res) => {
   const number = Number(req.params.number)
-  const result = await Objects.find({numbers: number})
+  const result = await Objects.find({ numbers: number })
 
   res.json(result)
 }
 
 const searchName = async (req, res) => {
-  const result = await Objects.find({name: req.params.name})
+  const result = await Objects.find({ name: req.params.name })
   res.json(result)
 }
 
 // Routes ---------------------------------------------------
 var router = express.Router()
-router.get('/number/:number', searchNumber)
-router.get('/name/:name', searchName)
+router.get('/api/search/number/:number', searchNumber)
+router.get('/api/search/name/:name', searchName)
 app.use('/', router)
 
 // Start service --------------------------------------------

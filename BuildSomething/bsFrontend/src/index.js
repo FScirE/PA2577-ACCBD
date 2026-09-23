@@ -4,9 +4,7 @@ const mongoose = require('mongoose')
 
 const Objects = require('./model')
 const calculateMeans = require('./dispatchMean')
-const {searchNumber , searchName} = require('./dispatchSearch')
-
-
+const { searchNumber, searchName } = require('./dispatchSearch')
 
 const PORT = 3000
 const MONGO_URL = 'mongodb://bs-database:27017/bsdb'

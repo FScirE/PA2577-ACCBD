@@ -25,6 +25,12 @@ input, button {
   padding-bottom: 1lh;
 }
 
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 #object-list {
   display: inline-block;
   width: max-content;

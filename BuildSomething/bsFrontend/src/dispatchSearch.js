@@ -1,7 +1,6 @@
 const fetch = require('node-fetch')
-const Objects = require('./model')
 
-const SEARCH_API_URL = 'http://bs-search:3000'
+const SEARCH_API_URL = 'http://bs-search:3000/api/search'
 
 const searchNumber = async (number) => {
     const result = await fetch(`${SEARCH_API_URL}/number/${number}`)

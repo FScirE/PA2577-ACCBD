@@ -10,9 +10,6 @@ const searchNameInput = document.getElementById('search-name-input')
 const searchNumberButton = document.getElementById('search-number-button')
 const searchNameButton = document.getElementById('search-name-button')
 
-
-
-
 var numbers = []
 var objects = []
 
@@ -23,7 +20,7 @@ const renderObjects = () => {
   objectList.innerHTML = ''
   objects.forEach(object => {
     const li = document.createElement('li')
-    li.textContent = `${object.name} : ${object.numbers.join(', ')}`
+    li.textContent = `${object.name} (${object.numbers.length} numbers)`
     objectList.appendChild(li)
   })
 }
@@ -74,13 +71,13 @@ form.addEventListener('submit', async (e) => {
 
 addButton.addEventListener('click', addNumber)
 
-meanButton.addEventListener('click', async (e) => {
+meanButton.addEventListener('click', async () => {
   const response = await fetch('/api/mean')
   const result = await response.json()
   window.alert(`Mean: ${result.mean} (from ${result.amt} valid entries)`)
 })
 
-searchNumberButton.addEventListener("click" , async (e) => {
+searchNumberButton.addEventListener("click" , async () => {
   const number = searchNumberInput.value
 
   if (!number) {
@@ -94,7 +91,7 @@ searchNumberButton.addEventListener("click" , async (e) => {
   window.alert(JSON.stringify(result))
 })
 
-searchNameButton.addEventListener("click" , async (e) => {
+searchNameButton.addEventListener("click" , async () => {
   const name = searchNameInput.value
 
   if (!name) {
