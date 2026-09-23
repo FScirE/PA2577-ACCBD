@@ -18,6 +18,8 @@ services:
       - bs-database
     build:
       context: ./bsMean
+    deploy:
+      replicas: 5
 
   bs-search:
     image: bssearch
@@ -27,6 +29,8 @@ services:
       - bs-database
     build:
       context: ./bsSearch
+    deploy:
+      replicas: 5
 
   bs-database:
     image: mongo

@@ -13,21 +13,43 @@ mongoose.connect(MONGO_URL).then(
 
 // Search ---------------------------------------------------
 const searchNumber = async (req, res) => {
-  const number = Number(req.params.number)
-  const result = await Objects.find({ numbers: number })
+  const entry = await Objects.findById(req.params.id)
 
-  res.json(result)
+  if (!entry) {
+    return res.status(404).json({ error: 'entry not found' })
+  }
+  if (entry.numbers.length === 0) {
+    return res.status(404).json({ error: 'array is empty' })
+  }
+
+  const number = Number(req.params.number)
+  const found = entry.numbers.includes(number)
+
+  res.json({ id: req.params.id, name: entry.name, found: found })
 }
 
-const searchName = async (req, res) => {
-  const result = await Objects.find({ name: req.params.name })
-  res.json(result)
+const searchRange = async (req, res) => {
+  const entry = await Objects.findById(req.params.id)
+
+  if (!entry) {
+    return res.status(404).json({ error: 'entry not found' })
+  }
+  if (entry.numbers.length === 0) {
+    return res.status(404).json({ error: 'array is empty' })
+  }
+
+  const low = Number(req.params.low)
+  const high = Number(req.params.high)
+  // look for lower and upper both inclusive
+  const found = entry.numbers.filter(n => n < low || n > high).length === 0
+
+  res.json({ id: req.params.id, name: entry.name, found: found })
 }
 
 // Routes ---------------------------------------------------
 var router = express.Router()
-router.get('/api/search/number/:number', searchNumber)
-router.get('/api/search/name/:name', searchName)
+router.get('/api/search/number/:id/:number', searchNumber)
+router.get('/api/search/range/:id/:low/:high', searchRange)
 app.use('/', router)
 
 // Start service --------------------------------------------

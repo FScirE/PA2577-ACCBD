@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 
 const Objects = require('./model')
 const calculateMeans = require('./dispatchMean')
-const { searchNumber, searchName } = require('./dispatchSearch')
+const { searchForNumber, searchInRange } = require('./dispatchSearch')
 
 const PORT = 3000
 const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
@@ -23,7 +23,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 const startPage = (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html'))
 
 const listObjects = async (req, res) => {
-  const bsObjects = await Objects.find()
+  const bsObjects = await Objects.aggregate([
+    {
+      $project: {
+        _id: 0,
+        name: 1,
+        numberCount: { $size: '$numbers' }
+      }
+    }
+  ])
+
   res.json(bsObjects)
 }
 
@@ -44,25 +53,56 @@ const getMean = async (req, res) => {
 }
 
 const getSearchNumber = async (req, res) => {
-  const result = await searchNumber(req.params.number)
+  const results = await searchForNumber(req.params.number)
+  const validResults = results.filter(item => item && !item.error)
 
-  res.json(result)
+  const allNames = validResults.length > 0
+    ? validResults
+      .filter(item => item.found)
+      .map(item => item.name)
+    : []
+
+  res.json({ names: allNames })
 }
 
-const getSearchName = async (req, res) => {
-  const result = await searchName(req.params.name)
+const getSearchRange = async (req, res) => {
+  const results = await searchInRange(req.params.low, req.params.high)
+  const validResults = results.filter(item => item && !item.error)
 
-  res.json(result)
+  const allNames = validResults.length > 0
+    ? validResults
+      .filter(item => item.found)
+      .map(item => item.name)
+    : []
+
+  res.json({ names: allNames })
+}
+
+const fillDB = async (req, res) => {
+  // fills 100 entries with 100-1000 random numbers from -10000 to 10000 inclusive
+  for (let i = 0; i < 100; i++) {
+    await Objects.create({ name: 'testObject' + i.toString(), numbers: Array.from(
+      { length: Math.floor(Math.random() * 901) + 100 },
+      () => Math.floor(Math.random() * 20001) - 10000
+    )})
+  }
+  res.status(200).json({ success: true })
+}
+
+const clearDB = async (req, res) => {
+  await Objects.deleteMany({})
+  res.status(200).json({ success: true })
 }
 
 var router = express.Router()
 router.get('/', startPage)
+router.get('/api/fill', fillDB)
+router.get('/api/clear', clearDB)
 router.get('/api/objects', listObjects)
 router.post('/api/objects', createObject)
 router.get('/api/mean', getMean)
 router.get('/api/search/number/:number', getSearchNumber)
-router.get('/api/search/name/:name', getSearchName)
-
+router.get('/api/search/range/:low/:high', getSearchRange)
 app.use('/', router)
 
 // Start app ------------------------------------------------

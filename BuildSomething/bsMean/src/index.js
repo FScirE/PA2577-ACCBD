@@ -18,7 +18,6 @@ const calculateMean = async (req, res) => {
   if (!entry) {
     return res.status(404).json({ error: 'entry not found' })
   }
-
   if (entry.numbers.length === 0) {
     return res.status(404).json({ error: 'array is empty' })
   }

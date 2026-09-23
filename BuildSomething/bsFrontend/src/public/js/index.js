@@ -1,4 +1,6 @@
 const form = document.getElementById('data-form')
+const fillButton = document.getElementById('fill-button')
+const clearButton = document.getElementById('clear-button')
 const nameInput = document.getElementById('name-input')
 const numberInput = document.getElementById('number-input')
 const numberList = document.getElementById('number-list')
@@ -6,9 +8,10 @@ const addButton = document.getElementById('add-button')
 const meanButton = document.getElementById('mean-button')
 const objectList = document.getElementById('object-list')
 const searchNumberInput = document.getElementById('search-number-input')
-const searchNameInput = document.getElementById('search-name-input')
+const searchRangeLow = document.getElementById('search-range-low')
+const searchRangeHigh = document.getElementById('search-range-high')
 const searchNumberButton = document.getElementById('search-number-button')
-const searchNameButton = document.getElementById('search-name-button')
+const searchRangeButton = document.getElementById('search-range-button')
 
 var numbers = []
 var objects = []
@@ -20,7 +23,8 @@ const renderObjects = () => {
   objectList.innerHTML = ''
   objects.forEach(object => {
     const li = document.createElement('li')
-    li.textContent = `${object.name} (${object.numbers.length} numbers)`
+    const count = object.numberCount ?? 0
+    li.textContent = `${object.name} (${count} numbers)`
     objectList.appendChild(li)
   })
 }
@@ -66,7 +70,7 @@ form.addEventListener('submit', async (e) => {
   nameInput.value = ''
   numbers = []
   renderNumbers()
-  loadObjects()
+  await loadObjects()
 })
 
 addButton.addEventListener('click', addNumber)
@@ -91,18 +95,29 @@ searchNumberButton.addEventListener("click" , async () => {
   window.alert(JSON.stringify(result))
 })
 
-searchNameButton.addEventListener("click" , async () => {
-  const name = searchNameInput.value
+searchRangeButton.addEventListener("click" , async () => {
+  const low = searchRangeLow.value
+  const high = searchRangeHigh.value
 
-  if (!name) {
-    window.alert("Enter a valid name")
+  if (!low || !high) {
+    window.alert("Enter valid bounds")
     return
   }
 
-  const response = await fetch('/api/search/name/' + name)
+  const response = await fetch(`/api/search/range/${low}/${high}`)
   const result = await response.json()
 
   window.alert(JSON.stringify(result))
+})
+
+fillButton.addEventListener('click', async () => {
+  await fetch("/api/fill")
+  await loadObjects()
+})
+
+clearButton.addEventListener('click', async () => {
+  await fetch("/api/clear")
+  await loadObjects()
 })
 
 loadObjects()

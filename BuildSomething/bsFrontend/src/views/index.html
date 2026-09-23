@@ -13,6 +13,15 @@
   <h1>BSApp</h1>
   <h2>Number Collector</h2>
 
+  <h3>Handle database</h3>
+  <div class="input-group">
+    <button id="fill-button">Generate 100 random entries</button>
+    <button id="clear-button">Clear database</button>
+  </div>
+  <br>
+  <hr>
+
+  <h3>Add named number array object</h3>
   <form id="data-form">
     <input type="text" id="name-input" placeholder="Name">
     <input type="number" id="number-input" placeholder="Add number" step="any">
@@ -36,12 +45,13 @@
   <div class="input-group">
     <div>
       <input type="number" id="search-number-input" placeholder="Search Number">
-      <button id="search-number-button">Search Number</button>
+      <button id="search-number-button">Search for number</button>
     </div>
 
     <div>
-      <input type="name" id="search-name-input" placeholder="Search Name">
-      <button id="search-name-button">Search Name</button>
+      <input type="name" id="search-range-low" placeholder="Lower bound">
+      <input type="name" id="search-range-high" placeholder="Upper bound">
+      <button id="search-range-button">Search in range</button>
     </div>
   </div>
   <br>

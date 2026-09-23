@@ -1,17 +1,30 @@
 const fetch = require('node-fetch')
+const Objects = require('./model')
 
 const SEARCH_API_URL = 'http://bs-search:3000/api/search'
 
-const searchNumber = async (number) => {
-    const result = await fetch(`${SEARCH_API_URL}/number/${number}`)
+const searchForNumber = async (number) => {
+    const ids = (await Objects.distinct('_id')).map(id => id.toString())
 
-    return result.json()
+    const requests = ids.map(id =>
+        fetch(`${SEARCH_API_URL}/number/${id}/${number}`)
+        .then(res => res.json())
+    )
+
+    const results = await Promise.all(requests)
+    return results
 }
 
-const searchName = async (name) => {
-    const result = await fetch(`${SEARCH_API_URL}/name/${name}`)
+const searchInRange = async (low, high) => {
+    const ids = (await Objects.distinct('_id')).map(id => id.toString())
 
-    return result.json()
+    const requests = ids.map(id =>
+        fetch(`${SEARCH_API_URL}/range/${id}/${low}/${high}`)
+        .then(res => res.json())
+    )
+
+    const results = await Promise.all(requests)
+    return results
 }
 
-module.exports = {searchNumber, searchName}
+module.exports = {searchForNumber, searchInRange}
