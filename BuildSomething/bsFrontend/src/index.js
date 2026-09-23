@@ -1,8 +1,9 @@
 const express = require('express')
 const path = require('path')
-const fetch = require('node-fetch')
 const mongoose = require('mongoose')
+
 const Objects = require('./model')
+const calculateMeans = require('./dispatchMean')
 
 const PORT = 3000
 const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
@@ -26,15 +27,26 @@ const listObjects = async (req, res) => {
 }
 
 const createObject = async (req, res) => {
-  console.log(req)
   const bsObject = await Objects.create({ name: req.body.name, numbers: req.body.numbers })
   res.status(201).json(bsObject)
+}
+
+const getMean = async (req, res) => {
+  const means = await calculateMeans()
+  const validMeans = means.filter(item => item && !item.error)
+
+  const totalMean = validMeans.length > 0
+    ? validMeans.reduce((sum, item) => sum + item.mean, 0) / validMeans.length
+    : 0
+
+  res.json({ mean: totalMean, amt: validMeans.length })
 }
 
 var router = express.Router()
 router.get('/', startPage)
 router.get('/api/objects', listObjects)
 router.post('/api/objects', createObject)
+router.get('/api/mean', getMean)
 app.use('/', router)
 
 // Start app ------------------------------------------------

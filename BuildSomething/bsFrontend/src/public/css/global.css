@@ -1,4 +1,32 @@
 body {
-  background-color: purple;
-  color: white;
+  font-size: 14pt;
+  font-family: Calibri, sans-serif;
+  background-color: darkslateblue;
+  color: lightblue;
+  text-align: center;
+  margin-top: 2lh;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+hr {
+  opacity: 0.2;
+}
+
+input, button {
+  padding: 0.25rem;
+}
+
+#number-list h4 {
+  margin-top: 0.5lh;
+  margin-bottom: 0;
+}
+#number-list {
+  padding-bottom: 1lh;
+}
+
+#object-list {
+  display: inline-block;
+  width: max-content;
+  text-align: left;
 }

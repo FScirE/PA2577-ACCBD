@@ -3,6 +3,7 @@ const nameInput = document.getElementById('name-input')
 const numberInput = document.getElementById('number-input')
 const numberList = document.getElementById('number-list')
 const addButton = document.getElementById('add-button')
+const meanButton = document.getElementById('mean-button')
 const objectList = document.getElementById('object-list')
 
 var numbers = []
@@ -15,12 +16,12 @@ const renderObjects = () => {
   objectList.innerHTML = ''
   objects.forEach(object => {
     const li = document.createElement('li')
-    li.textContent = `${object.name} -- ${Array(object.numbers).join(', ')}`
+    li.textContent = `${object.name} : ${object.numbers.join(', ')}`
     objectList.appendChild(li)
   })
 }
 const renderNumbers = () => {
-  numberList.innerHTML = numbers.join(", ")
+  numberList.innerHTML = "<h4>Numbers to add:</h4>" + numbers.join(', ')
 }
 
 const loadObjects = async () => {
@@ -63,6 +64,13 @@ form.addEventListener('submit', async (e) => {
   renderNumbers()
   loadObjects()
 })
+
 addButton.addEventListener('click', addNumber)
+
+meanButton.addEventListener('click', async (e) => {
+  const response = await fetch('/api/mean')
+  const result = await response.json()
+  window.alert(`Mean: ${result.mean} (from ${result.amt} valid entries)`)
+})
 
 loadObjects()
