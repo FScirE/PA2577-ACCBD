@@ -11,20 +11,20 @@ const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
 const app = express()
 
 // Connect to database --------------------------------------
-let connected = false
-while (!connected) {
-  try {
-    mongoose.connect(MONGO_URL).then(
+const connectToDatabase = async () => {
+  while (true) {
+    try {
+      await mongoose.connect(MONGO_URL)
       console.log('Connected to MongoDB')
-    )
-    connected = true
-  }
-  catch {
-    console.warn('MongoDB connection failed, retrying')
-    // retry after 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000))
+      return
+    }
+    catch (error) {
+      console.warn('MongoDB connection failed, retrying')
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    }
   }
 }
+connectToDatabase()
 
 // Set up express -------------------------------------------
 app.use(express.json())
@@ -73,7 +73,7 @@ const getMean = async (req, res) => {
   const totalSum = validMeans.reduce((sum, item) => sum + (item.mean * item.count), 0)
   const totalNumbers = validMeans.reduce((count, item) => count + item.count, 0)
   const totalMean = totalNumbers > 0
-    ? totalMean = totalSum / totalNumbers
+    ? totalSum / totalNumbers
     : 0
 
   res.json({ mean: totalMean, entries: validMeans.length, numbers: totalNumbers })

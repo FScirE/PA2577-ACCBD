@@ -29,11 +29,14 @@ const renderObjects = () => {
   })
 }
 const renderNumbers = () => {
-  numberList.innerHTML = "<h4>Numbers to add:</h4>" + numbers.join(', ')
+  numberList.innerHTML = "<h4>Numbers to add:</h4>" + (numbers.length > 0 ? numbers.join(', ') : '-')
 }
 
 const loadObjects = async () => {
-  const res = await fetch('/api/objects')
+  const res = await fetch(
+    '/api/objects',
+    { cache: 'no-cache' }
+  )
   objects = await res.json()
   renderObjects()
 }
@@ -62,11 +65,16 @@ form.addEventListener('submit', async (e) => {
     return
   }
 
-  await fetch('/api/objects', {
+  const response = await fetch('/api/objects', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: nameInput.value, numbers: numbers })
   })
+  if (!response.ok) {
+    window.alert('Could not save the object')
+    return
+  }
+
   nameInput.value = ''
   numbers = []
   renderNumbers()

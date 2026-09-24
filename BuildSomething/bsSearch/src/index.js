@@ -7,20 +7,20 @@ const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
 const app = express()
 
 // Connect to database --------------------------------------
-let connected = false
-while (!connected) {
-  try {
-    mongoose.connect(MONGO_URL).then(
+const connectToDatabase = async () => {
+  while (true) {
+    try {
+      await mongoose.connect(MONGO_URL)
       console.log('Connected to MongoDB')
-    )
-    connected = true
-  }
-  catch {
-    console.warn('MongoDB connection failed, retrying')
-    // retry after 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000))
+      return
+    }
+    catch (error) {
+      console.warn('MongoDB connection failed, retrying')
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    }
   }
 }
+connectToDatabase()
 
 // Search ---------------------------------------------------
 const searchNumber = async (req, res) => {
