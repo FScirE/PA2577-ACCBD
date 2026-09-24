@@ -11,9 +11,20 @@ const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
 const app = express()
 
 // Connect to database --------------------------------------
-mongoose.connect(MONGO_URL).then(
-  console.log('Connected to MongoDB')
-)
+let connected = false
+while (!connected) {
+  try {
+    mongoose.connect(MONGO_URL).then(
+      console.log('Connected to MongoDB')
+    )
+    connected = true
+  }
+  catch {
+    console.warn('MongoDB connection failed, retrying')
+    // retry after 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 2000))
+  }
+}
 
 // Set up express -------------------------------------------
 app.use(express.json())
@@ -59,13 +70,11 @@ const getMean = async (req, res) => {
   const means = await calculateMeans()
   const validMeans = means.filter(item => item && !item.error)
 
-  const totalSum = validMeans.reduce((sum, item) => sum + item.sum, 0)
+  const totalSum = validMeans.reduce((sum, item) => sum + (item.mean * item.count), 0)
   const totalNumbers = validMeans.reduce((count, item) => count + item.count, 0)
-  let totalMean = 0
-
-  if (totalNumbers > 0) {
-    totalMean = totalSum / totalNumbers
-  }
+  const totalMean = totalNumbers > 0
+    ? totalMean = totalSum / totalNumbers
+    : 0
 
   res.json({ mean: totalMean, entries: validMeans.length, numbers: totalNumbers })
 }
@@ -113,7 +122,9 @@ const clearDB = async (req, res) => {
 }
 
 var router = express.Router()
+// views
 router.get('/', startPage)
+// api
 router.get('/api/fill', fillDB)
 router.get('/api/clear', clearDB)
 router.get('/api/objects', listObjects)

@@ -1,0 +1,193 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: buildsomething
+# frontend service and deployment to its own Pod
+# service type is LoadBalancer to allow outside access
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bs-frontend
+  namespace: buildsomething
+  labels:
+    app: bs-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: bs-frontend
+  ports:
+    - name: http
+      port: 3000
+      nodePort: 30011
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bs-frontend
+  namespace: buildsomething
+  labels:
+    app: bs-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bs-frontend
+  template:
+    metadata:
+      labels:
+        app: bs-frontend
+    spec:
+      containers:
+        - name: bs-frontend
+          image: fscire/bs-frontend:v1
+          ports:
+            - containerPort: 3000
+              name: http
+# backend (mean calc) service and deployment to its own 5 Pods (1 per replica)
+# service type is ClusterIP (default), only allows internal traffic
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bs-mean
+  namespace: buildsomething
+  labels:
+    app: bs-mean
+spec:
+  selector:
+    app: bs-mean
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bs-mean
+  namespace: buildsomething
+  labels:
+    app: bs-mean
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: bs-mean
+  template:
+    metadata:
+      labels:
+        app: bs-mean
+    spec:
+      containers:
+        - name: bs-mean
+          image: fscire/bs-mean:v1
+          ports:
+            - containerPort: 3000
+              name: http
+---
+# backend (search functions) service and deployment to its own 5 Pods (1 per replica)
+# service type is ClusterIP (default), only allows internal traffic
+apiVersion: v1
+kind: Service
+metadata:
+  name: bs-search
+  namespace: buildsomething
+  labels:
+    app: bs-search
+spec:
+  selector:
+    app: bs-search
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bs-search
+  namespace: buildsomething
+  labels:
+    app: bs-search
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: bs-search
+  template:
+    metadata:
+      labels:
+        app: bs-search
+    spec:
+      containers:
+        - name: bs-search
+          image: fscire/bs-search:v1
+          ports:
+            - containerPort: 3000
+              name: http
+---
+# backend (search functions) service and StatefulSet (since it needs persistent storage)
+# service type is ClusterIP (default), only allows internal traffic
+apiVersion: v1
+kind: Service
+metadata:
+  name: bs-database
+  namespace: buildsomething
+  labels:
+    app: bs-database
+spec:
+  ports:
+    - name: mongo
+      port: 27017
+      targetPort: 27017
+  selector:
+    app: bs-database
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bs-database
+  namespace: buildsomething
+  labels:
+    app: bs-database
+spec:
+  serviceName: bs-database
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bs-database
+  template:
+    metadata:
+      labels:
+        app: bs-database
+    spec:
+      containers:
+        - name: mongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+              name: mongo
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+            - name: mongo-config
+              mountPath: /data/configdb
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: mongo-config
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Mi

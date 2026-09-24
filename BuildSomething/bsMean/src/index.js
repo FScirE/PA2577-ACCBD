@@ -7,9 +7,20 @@ const MONGO_URL = 'mongodb://bs-database:27017/bsdb'
 const app = express()
 
 // Connect to database --------------------------------------
-mongoose.connect(MONGO_URL).then(
-  console.log('Connected to MongoDB')
-)
+let connected = false
+while (!connected) {
+  try {
+    mongoose.connect(MONGO_URL).then(
+      console.log('Connected to MongoDB')
+    )
+    connected = true
+  }
+  catch {
+    console.warn('MongoDB connection failed, retrying')
+    // retry after 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 2000))
+  }
+}
 
 // Mean calculation -----------------------------------------
 const calculateMean = async (req, res) => {
@@ -25,7 +36,7 @@ const calculateMean = async (req, res) => {
   const sum = entry.numbers.reduce((total, value) => total + value, 0)
   const mean = sum / entry.numbers.length
 
-  res.json({ id: req.params.id, sum: sum, count: entry.numbers.length, mean: mean })
+  res.json({ id: req.params.id, count: entry.numbers.length, mean: mean })
 }
 
 // Routes ---------------------------------------------------
