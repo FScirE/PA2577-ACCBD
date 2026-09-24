@@ -131,7 +131,7 @@ spec:
             - containerPort: 3000
               name: http
 ---
-# backend (search functions) service and StatefulSet (since it needs persistent storage)
+# database service and StatefulSet (since it needs persistent storage)
 # service type is ClusterIP (default), only allows internal traffic
 apiVersion: v1
 kind: Service
