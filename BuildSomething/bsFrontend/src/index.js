@@ -36,6 +36,21 @@ const listObjects = async (req, res) => {
 }
 
 const createObject = async (req, res) => {
+  const name = req.body.name
+  const numbers = req.body.numbers
+
+  if (!name || !Array.isArray(numbers) || numbers.length === 0) {
+    return res.status(400).json({ error: 'Name and Numbers is required'})
+  }
+
+  const numberArray = numbers.map(Number)
+
+  for (const number of numberArray) {
+    if (!Number.isFinite(number)) {
+      return res.status(400).json({ error: 'All values must be numbers'})
+    }
+  }
+
   const bsObject = await Objects.create({ name: req.body.name, numbers: req.body.numbers })
   res.status(201).json(bsObject)
 }
