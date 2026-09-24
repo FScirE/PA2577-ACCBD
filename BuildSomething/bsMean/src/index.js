@@ -20,7 +20,6 @@ const connectToDatabase = async () => {
     }
   }
 }
-connectToDatabase()
 
 // Mean calculation -----------------------------------------
 const calculateMean = async (req, res) => {
@@ -42,9 +41,16 @@ const calculateMean = async (req, res) => {
 // Routes ---------------------------------------------------
 var router = express.Router()
 router.get('/api/mean/:id', calculateMean)
-app.use('/', router)
 
-// Start service --------------------------------------------
-app.listen(PORT, () => {
-  console.log(`bsMean running on port ${PORT}`)
-})
+const startServer = async () => {
+  await connectToDatabase()
+
+  app.use('/', router)
+
+  // Start service --------------------------------------------
+  app.listen(PORT, () => {
+    console.log(`bsMean running on port ${PORT}`)
+  })
+}
+
+startServer()

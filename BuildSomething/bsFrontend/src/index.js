@@ -24,11 +24,6 @@ const connectToDatabase = async () => {
     }
   }
 }
-connectToDatabase()
-
-// Set up express -------------------------------------------
-app.use(express.json())
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Set up routes --------------------------------------------
 const startPage = (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html'))
@@ -132,9 +127,20 @@ router.post('/api/objects', createObject)
 router.get('/api/mean', getMean)
 router.get('/api/search/number/:number', getSearchNumber)
 router.get('/api/search/range/:low/:high', getSearchRange)
-app.use('/', router)
 
-// Start app ------------------------------------------------
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
+const startServer = async () => {
+  await connectToDatabase()
+
+  // Set up express -------------------------------------------
+  app.use(express.json())
+  app.use(express.static(path.join(__dirname, 'public')));
+  
+  app.use('/', router)
+
+  // Start app ------------------------------------------------
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`)
+  })
+}
+
+startServer()

@@ -20,7 +20,6 @@ const connectToDatabase = async () => {
     }
   }
 }
-connectToDatabase()
 
 // Search ---------------------------------------------------
 const searchNumber = async (req, res) => {
@@ -61,9 +60,16 @@ const searchRange = async (req, res) => {
 var router = express.Router()
 router.get('/api/search/number/:id/:number', searchNumber)
 router.get('/api/search/range/:id/:low/:high', searchRange)
-app.use('/', router)
 
-// Start service --------------------------------------------
-app.listen(PORT, () => {
-  console.log(`bsSearch running on port ${PORT}`)
-})
+const startServer = async () => {
+  await connectToDatabase()
+
+  app.use('/', router)
+
+  // Start service --------------------------------------------
+  app.listen(PORT, () => {
+    console.log(`bsSearch running on port ${PORT}`)
+  })
+}
+
+startServer()
