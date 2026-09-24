@@ -42,6 +42,7 @@ spec:
       containers:
         - name: bs-frontend
           image: fscire/bs-frontend:v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
               name: http
@@ -83,6 +84,7 @@ spec:
       containers:
         - name: bs-mean
           image: fscire/bs-mean:v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
               name: http
@@ -124,6 +126,7 @@ spec:
       containers:
         - name: bs-search
           image: fscire/bs-search:v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
               name: http
