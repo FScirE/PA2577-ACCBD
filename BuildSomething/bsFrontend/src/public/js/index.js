@@ -78,7 +78,7 @@ addButton.addEventListener('click', addNumber)
 meanButton.addEventListener('click', async () => {
   const response = await fetch('/api/mean')
   const result = await response.json()
-  window.alert(`Mean: ${result.mean} (from ${result.amt} valid entries)`)
+  window.alert(`Mean: ${result.mean} (from ${result.numbers} numbers in ${result.entries} entries)`)
 })
 
 searchNumberButton.addEventListener("click" , async () => {

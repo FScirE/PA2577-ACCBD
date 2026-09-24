@@ -25,7 +25,7 @@ const calculateMean = async (req, res) => {
   const sum = entry.numbers.reduce((total, value) => total + value, 0)
   const mean = sum / entry.numbers.length
 
-  res.json({ id: req.params.id, mean: mean })
+  res.json({ id: req.params.id, sum: sum, count: entry.numbers.length, mean: mean })
 }
 
 // Routes ---------------------------------------------------

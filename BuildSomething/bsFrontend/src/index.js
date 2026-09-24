@@ -44,11 +44,15 @@ const getMean = async (req, res) => {
   const means = await calculateMeans()
   const validMeans = means.filter(item => item && !item.error)
 
-  const totalMean = validMeans.length > 0
-    ? validMeans.reduce((sum, item) => sum + item.mean, 0) / validMeans.length
-    : 0
+  const totalSum = validMeans.reduce((sum, item) => sum + item.sum, 0)
+  const totalNumbers = validMeans.reduce((count, item) => count + item.count, 0)
+  let totalMean = 0
 
-  res.json({ mean: totalMean, amt: validMeans.length })
+  if (totalNumbers > 0) {
+    totalMean = totalSum / totalNumbers
+  }
+
+  res.json({ mean: totalMean, entries: validMeans.length, numbers: totalNumbers })
 }
 
 const getSearchNumber = async (req, res) => {
