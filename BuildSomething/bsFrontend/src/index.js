@@ -27,6 +27,7 @@ const connectToDatabase = async () => {
 
 // Set up routes --------------------------------------------
 const startPage = (req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html'))
+const queryPage = (req, res) => res.sendFile(path.join(__dirname, 'views', 'query.html'))
 
 const listObjects = async (req, res) => {
   // only send name and length of number array
@@ -119,6 +120,7 @@ const clearDB = async (req, res) => {
 var router = express.Router()
 // views
 router.get('/', startPage)
+router.get('/query', queryPage)
 // api
 router.get('/api/fill', fillDB)
 router.get('/api/clear', clearDB)
@@ -134,7 +136,7 @@ const startServer = async () => {
   // Set up express -------------------------------------------
   app.use(express.json())
   app.use(express.static(path.join(__dirname, 'public')));
-  
+
   app.use('/', router)
 
   // Start app ------------------------------------------------

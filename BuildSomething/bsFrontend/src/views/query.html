@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BSApp</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <script src="/js/query.js" defer></script>
+</head>
+
+<body>
+  <h1>BSApp</h1>
+  <h2>Number Collector</h2>
+
+  <nav>
+    <a href="/">Home</a>
+    <a>Query</a>
+  </nav>
+
+  <h3>Calculate mean value of all numbers</h3>
+  <div class="input-group">
+    <button id="mean-button">Calculate mean</button>
+  </div>
+  <br>
+  <hr>
+
+  <h3>Search for a number/objects in number range</h3>
+  <div class="input-group">
+    <div>
+      <input type="number" id="search-number-input" placeholder="Search Number">
+      <button id="search-number-button">Search for number</button>
+    </div>
+
+    <div>
+      <input type="name" id="search-range-low" placeholder="Lower bound">
+      <input type="name" id="search-range-high" placeholder="Upper bound">
+      <button id="search-range-button">Search in range</button>
+    </div>
+  </div>
+  <br>
+  <hr>
+
+  <ul id="object-list"></ul>
+</body>
+</html>

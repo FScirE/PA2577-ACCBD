@@ -9,6 +9,20 @@ body {
   padding-right: 2rem;
 }
 
+nav {
+  border-top: 2px dotted rgb(from lightblue r g b / 0.4);
+  border-bottom: 2px dotted rgb(from lightblue r g b / 0.4);
+  padding: 0.25rem;
+}
+nav a {
+  all: unset;
+  padding: 0.5rem;
+}
+nav a:hover {
+  cursor: pointer;
+  color: white;
+}
+
 hr {
   opacity: 0.2;
 }

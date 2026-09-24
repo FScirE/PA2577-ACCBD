@@ -5,13 +5,7 @@ const nameInput = document.getElementById('name-input')
 const numberInput = document.getElementById('number-input')
 const numberList = document.getElementById('number-list')
 const addButton = document.getElementById('add-button')
-const meanButton = document.getElementById('mean-button')
 const objectList = document.getElementById('object-list')
-const searchNumberInput = document.getElementById('search-number-input')
-const searchRangeLow = document.getElementById('search-range-low')
-const searchRangeHigh = document.getElementById('search-range-high')
-const searchNumberButton = document.getElementById('search-number-button')
-const searchRangeButton = document.getElementById('search-range-button')
 
 var numbers = []
 var objects = []
@@ -21,6 +15,12 @@ const MIN_VALUE = -10000
 
 const renderObjects = () => {
   objectList.innerHTML = ''
+
+  if (objects.length === 0) {
+    objectList.innerHTML = 'No entries'
+    return
+  }
+
   objects.forEach(object => {
     const li = document.createElement('li')
     const count = object.numberCount ?? 0
@@ -82,41 +82,6 @@ form.addEventListener('submit', async (e) => {
 })
 
 addButton.addEventListener('click', addNumber)
-
-meanButton.addEventListener('click', async () => {
-  const response = await fetch('/api/mean')
-  const result = await response.json()
-  window.alert(`Mean: ${result.mean} (from ${result.numbers} numbers in ${result.entries} entries)`)
-})
-
-searchNumberButton.addEventListener("click" , async () => {
-  const number = searchNumberInput.value
-
-  if (!number) {
-    window.alert("Enter a valid number")
-    return
-  }
-
-  const response = await fetch('/api/search/number/' + number)
-  const result = await response.json()
-
-  window.alert(JSON.stringify(result))
-})
-
-searchRangeButton.addEventListener("click" , async () => {
-  const low = searchRangeLow.value
-  const high = searchRangeHigh.value
-
-  if (!low || !high) {
-    window.alert("Enter valid bounds")
-    return
-  }
-
-  const response = await fetch(`/api/search/range/${low}/${high}`)
-  const result = await response.json()
-
-  window.alert(JSON.stringify(result))
-})
 
 fillButton.addEventListener('click', async () => {
   await fetch("/api/fill")
