@@ -118,6 +118,28 @@ class CloneDetector {
         //         and not any of the Clones used during that expansion.
         //
 
+        let expandedClones = [];
+
+        for (let candidate of file.instances) {
+            let expanded = false;
+
+            for (let currentClone of expandedClones) {
+                
+                let alreadyInCurrentClone = currentClone.sourceStart <= candidate.sourceStart && currentClone.sourceEnd >= candidate.sourceEnd;
+
+                if (alreadyInCurrentClone || currentClone.maybeExpandWith(candidate)) {
+                    expanded = true;
+                    break;
+                }
+            }
+
+            if (!expanded) {
+                expandedClones.push(candidate);
+            }
+        }
+
+        file.instances = expandedClones;
+
         return file;
     }
 
