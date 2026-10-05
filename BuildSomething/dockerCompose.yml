@@ -34,7 +34,7 @@ services:
 
   bs-database:
     image: mongo
-    restart: always
+    restart: on-failure
     command: --quiet --syslog
     expose:
       - 27017
