@@ -12,7 +12,7 @@ services:
     volumes:
       - qc-volume:/QualitasCorpus
     environment:
-      DELAY: 0
+      DELAY: 0.5
       TARGET: "cs-consumer:3000"
   cs-consumer:
     image: csconsumer
@@ -23,4 +23,4 @@ services:
 volumes:
   qc-volume:
     external: true
-    
+
