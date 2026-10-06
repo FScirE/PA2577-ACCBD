@@ -13,6 +13,7 @@ services:
       - qc-volume:/QualitasCorpus
     environment:
       DELAY: 0.5
+      CHUNKSIZE: 5
       TARGET: "cs-consumer:3000"
   cs-consumer:
     image: csconsumer

@@ -124,10 +124,15 @@ class CloneDetector {
             let expanded = false;
 
             for (let currentClone of expandedClones) {
-                
-                let alreadyInCurrentClone = currentClone.sourceStart <= candidate.sourceStart && currentClone.sourceEnd >= candidate.sourceEnd;
+                // clone candidates can be expandable with the source, but have different targets
+                // this code prevents targets being mixed up
+                const sourceOffset = candidate.sourceStart - currentClone.sourceStart;
+                const targetContinues = currentClone.targets.some(currentTarget => candidate.targets.some(candidateTarget =>
+                    candidateTarget.name == currentTarget.name &&
+                    candidateTarget.startLine - currentTarget.startLine == sourceOffset
+                ));
 
-                if (alreadyInCurrentClone || currentClone.maybeExpandWith(candidate)) {
+                if (targetContinues && currentClone.maybeExpandWith(candidate)) {
                     expanded = true;
                     break;
                 }
@@ -139,7 +144,6 @@ class CloneDetector {
         }
 
         file.instances = expandedClones;
-
         return file;
     }
 
@@ -157,6 +161,16 @@ class CloneDetector {
         // Return: file, with file.instances containing unique Clone objects that may contain several targets
         //
 
+        const consolidatedClones = file.instances.reduce((acc, curr) => {
+            let existingClone = acc.find(e => e.equals(curr))
+            if (existingClone)
+                existingClone.addTarget(curr)
+            else
+                acc.push(curr)
+            return acc
+        }, [])
+
+        file.instances = consolidatedClones
         return file;
     }
 
