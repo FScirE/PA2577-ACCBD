@@ -37,6 +37,19 @@ function getStatistics() {
     return output;
 }
 
+app.get('/timers', (req, res) => {
+    let output = '<h1>Timing History</h1>';
+
+    for (let time of timingHistory) {
+        output += time.name;
+        output += ': total ' + time.total + 'µs';
+        output += ', match ' + time.match + 'µs';
+        output += ', lines ' + time.lines + '<br>';
+    }
+
+    res.send(output);
+});
+
 function lastFileTimersHTML() {
     if (!lastFile) return '';
     output = '<p>Timers for last file processed:</p>\n<ul>\n'
@@ -106,6 +119,7 @@ PASS = fn => d => {
 const STATS_FREQ = 100;
 const URL = process.env.URL || 'http://localhost:8080/';
 var lastFile = null;
+var timingHistory = [];
 
 function maybePrintStatistics(file, cloneDetector, cloneStore) {
     if (0 == cloneDetector.numberOfProcessedFiles % STATS_FREQ) {
@@ -122,6 +136,19 @@ function maybePrintStatistics(file, cloneDetector, cloneStore) {
     return file;
 }
 
+function storeTiming(file) {
+    let timers = Timer.getTimers(file);
+
+    timingHistory.push({
+        name: file.name,
+        lines: file.fileCount,
+        total: Number(timers.total / 1000n),
+        match: Number(timers.match / 1000n)
+    });
+
+    return file;
+}
+
 // Processing of the file
 // --------------------
 function processFile(filename, contents) {
@@ -133,6 +160,10 @@ function processFile(filename, contents) {
         .then( (file) => Timer.startTimer(file, 'total') )
         .then( (file) => cd.preprocess(file) )
         .then( (file) => cd.transform(file) )
+        .then( (file) => {
+            file.fileCount = file.lines.length;
+            return file;
+        })
 
         .then( (file) => Timer.startTimer(file, 'match') )
         .then( (file) => cd.matchDetect(file) )
@@ -141,6 +172,7 @@ function processFile(filename, contents) {
 
         .then( (file) => cd.storeFile(file) )
         .then( (file) => Timer.endTimer(file, 'total') )
+        .then( (file) => storeTiming(file) )
         .then( PASS( (file) => lastFile = file ))
         .then( PASS( (file) => maybePrintStatistics(file, cd, cloneStore) ))
     // TODO Store the timers from every file (or every 10th file), create a new landing page /timers
