@@ -9,6 +9,7 @@ const CloneDetector = require('./CloneDetector');
 const CloneStorage = require('./CloneStorage');
 const FileStorage = require('./FileStorage');
 
+const getGraph = require('./graph')
 
 // Express and Formidable stuff to receice a file for further processing
 // --------------------
@@ -40,8 +41,10 @@ function getStatistics() {
 app.get('/timers', (req, res) => {
     let output = '<h1>Timing History</h1>';
 
+    output += getGraph(timingHistory)
+
     for (let time of timingHistory) {
-        output += time.name;
+        output += `<span id="${time.name}"></span>${time.name}`;
         output += ': total ' + time.total + 'µs';
         output += ', match ' + time.match + 'µs';
         output += ', lines ' + time.lines + '<br>';
@@ -71,7 +74,7 @@ function listClonesHTML() {
         output += '<p>Starting at line: ' + clone.sourceStart + ' , ending at line: ' + clone.sourceEnd + '</p>\n';
         output += '<ul>';
         clone.targets.forEach( target => {
-            output += '<li>Found in ' + target.name + ' starting at line ' + target.startLine + '\n';            
+            output += '<li>Found in ' + target.name + ' starting at line ' + target.startLine + '\n';
         });
         output += '</ul>\n'
         output += '<h3>Contents:</h3>\n<pre><code>\n';
