@@ -1,13 +1,25 @@
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b)
+  const middle = Math.floor(sorted.length / 2)
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2
+}
+
 function getGraph(timingHistory) {
-  const timingPerLine = timingHistory.map(time => {
+  const timingPerFile = timingHistory.slice(2).map(time => ({
+    ...time,
+    total: time.lines > 0 ? time.total / time.lines : 0,
+    match: time.lines > 0 ? time.match / time.lines : 0
+  }))
+  const rollingMedianTimingPerLine = timingPerFile.slice(7).map((time, index) => {
+    const window = timingPerFile.slice(index, index + 21)
     return {
       ...time,
-      total: time.lines > 0 ? time.total / time.lines : 0,
-      match: time.lines > 0 ? time.match / time.lines : 0
+      total: median(window.map(item => item.total)),
+      match: median(window.map(item => item.match))
     }
   })
 
-  const values = timingPerLine.map(time => [time.total, time.match]).flat()
+  const values = rollingMedianTimingPerLine.map(time => [time.total, time.match]).flat()
   const maxTime = Math.max(0, ...values)
   const barWidth = value => !maxTime ? 0 : (value / maxTime) * 100
 
@@ -20,9 +32,8 @@ function getGraph(timingHistory) {
     }
     .timingRow {
       margin: 0;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
-    .timingName { overflow-wrap: anywhere; }
     .timingBar { display: block; height: 1em; }
     .totalBar { background-color: cornflowerblue; }
     .matchBar { background-color: coral; }
@@ -30,19 +41,18 @@ function getGraph(timingHistory) {
   </style>`
 
   output += `<div id="graphContainer">
-    <h3>Timing per line over time</h3>
+    <h3>Rolling median timing per line over time (excluding test files)</h3>
     <p class="timingLegend">
       <span class="totalBar">&nbsp;&nbsp;</span> Total<br>
       <span class="matchBar">&nbsp;&nbsp;</span> Match
     </p>
   `
 
-  if (timingPerLine.length === 0) {
+  if (rollingMedianTimingPerLine.length === 0) {
     output += '<p>No timing data yet.</p>'
   } else {
-    for (let time of timingPerLine) {
+    for (let time of rollingMedianTimingPerLine) {
       output += `<div class="timingRow">
-        <a href="#${time.name}" class="timingName">${time.name}</a>
         <div class="timingBar totalBar" style="width:${barWidth(time.total)}%" title="Total: ${time.total.toFixed(1)}µs/line"></div>
         <div class="timingBar matchBar" style="width:${barWidth(time.match)}%" title="Match: ${time.match.toFixed(1)}µs/line"></div>
       </div>`

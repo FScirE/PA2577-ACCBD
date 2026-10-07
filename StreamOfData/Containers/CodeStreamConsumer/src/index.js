@@ -44,7 +44,7 @@ app.get('/timers', (req, res) => {
     output += getGraph(timingHistory)
 
     for (let time of timingHistory) {
-        output += `<span id="${time.name}"></span>${time.name}`;
+        output += time.name;
         output += ': total ' + time.total + 'µs';
         output += ', match ' + time.match + 'µs';
         output += ', lines ' + time.lines + '<br>';
