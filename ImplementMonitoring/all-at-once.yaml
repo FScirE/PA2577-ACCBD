@@ -4,7 +4,7 @@ version: "3.8"
 services:
   clone-detector:
     image: cljdetector
-    command: clear 
+    command: clear
     ports:
       - 8080:3000
     volumes:
@@ -28,10 +28,19 @@ services:
     volumes:
       - dbstorage:/data/db
       - dbconfig:/data/configdb
-    
+
+  monitor-tool:
+    image: monitortool
+    depends_on:
+      - dbstorage
+    ports:
+      - 8000:3000
+    environment:
+      MONGO_URL: mongodb://dbstorage:27017
+      DB_NAME: cloneDetector
+
 volumes:
   dbstorage:
   dbconfig:
   qc-volume:
     external: true
-    

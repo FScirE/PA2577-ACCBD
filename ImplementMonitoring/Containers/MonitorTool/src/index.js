@@ -1,195 +1,126 @@
-const express = require('express');
-const formidable = require('formidable');
-const fs = require('fs/promises');
-const app = express();
-const PORT = 3000;
+const express = require('express')
+const app = express()
+const PORT = 3000
+const mongoose = require('mongoose')
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017'
+const DB_NAME = process.env.DB_NAME || 'cloneDetector'
 
-const Timer = require('./Timer');
-const CloneDetector = require('./CloneDetector');
-const CloneStorage = require('./CloneStorage');
-const FileStorage = require('./FileStorage');
+const POLLING_DELAY = 1000
 
-const getGraph = require('./graph')
-
-// Express and Formidable stuff to receice a file for further processing
-// --------------------
-const form = formidable({multiples:false});
-
-app.post('/', fileReceiver );
-function fileReceiver(req, res, next) {
-    form.parse(req, (err, fields, files) => {
-        fs.readFile(files.data.filepath, { encoding: 'utf8' })
-            .then( data => { return processFile(fields.name, data); });
-    });
-    return res.end('');
-}
-
-app.get('/', viewClones );
-
-const server = app.listen(PORT, () => { console.log('Listening for files on port', PORT); });
-
-
-// Page generation for viewing current progress
-// --------------------
-function getStatistics() {
-    let cloneStore = CloneStorage.getInstance();
-    let fileStore = FileStorage.getInstance();
-    let output = 'Processed ' + fileStore.numberOfFiles + ' files containing ' + cloneStore.numberOfClones + ' clones.'
-    return output;
-}
-
-app.get('/timers', (req, res) => {
-    let output = '<h1>Timing History</h1>';
-
-    output += getGraph(timingHistory)
-
-    for (let time of timingHistory) {
-        output += time.name;
-        output += ': total ' + time.total + 'µs';
-        output += ', match ' + time.match + 'µs';
-        output += ', lines ' + time.lines + '<br>';
-    }
-
-    res.send(output);
-});
-
-function lastFileTimersHTML() {
-    if (!lastFile) return '';
-    output = '<p>Timers for last file processed:</p>\n<ul>\n'
-    let timers = Timer.getTimers(lastFile);
-    for (t in timers) {
-        output += '<li>' + t + ': ' + (timers[t] / (1000n)) + ' µs\n'
-    }
-    output += '</ul>\n';
-    return output;
-}
-
-function listClonesHTML() {
-    let cloneStore = CloneStorage.getInstance();
-    let output = '';
-
-    cloneStore.clones.forEach( clone => {
-        output += '<hr>\n';
-        output += '<h2>Source File: ' + clone.sourceName + '</h2>\n';
-        output += '<p>Starting at line: ' + clone.sourceStart + ' , ending at line: ' + clone.sourceEnd + '</p>\n';
-        output += '<ul>';
-        clone.targets.forEach( target => {
-            output += '<li>Found in ' + target.name + ' starting at line ' + target.startLine + '\n';
-        });
-        output += '</ul>\n'
-        output += '<h3>Contents:</h3>\n<pre><code>\n';
-        output += clone.originalCode;
-        output += '</code></pre>\n';
-    });
-
-    return output;
-}
-
-function listProcessedFilesHTML() {
-    let fs = FileStorage.getInstance();
-    let output = '<HR>\n<H2>Processed Files</H2>\n'
-    output += fs.filenames.reduce( (out, name) => {
-        out += '<li>' + name + '\n';
-        return out;
-    }, '<ul>\n');
-    output += '</ul>\n';
-    return output;
-}
-
-function viewClones(req, res, next) {
-    let page='<HTML><HEAD><TITLE>CodeStream Clone Detector</TITLE></HEAD>\n';
-    page += '<BODY><H1>CodeStream Clone Detector</H1>\n';
-    page += '<P>' + getStatistics() + '</P>\n';
-    page += lastFileTimersHTML() + '\n';
-    page += listClonesHTML() + '\n';
-    page += listProcessedFilesHTML() + '\n';
-    page += '</BODY></HTML>';
-    res.send(page);
-}
-
-// Some helper functions
-// --------------------
-// PASS is used to insert functions in a Promise stream and pass on all input parameters untouched.
-PASS = fn => d => {
+const connectToDatabase = async () => {
+  while (true) {
     try {
-        fn(d);
-        return d;
-    } catch (e) {
-        throw e;
+      await mongoose.connect(MONGO_URL, { dbName: DB_NAME })
+      return
+    } catch (error) {
+      console.warn('MongoDB connection failed, retrying:', error.message)
+      await new Promise(resolve => setTimeout(resolve, 500))
     }
-};
-
-const STATS_FREQ = 100;
-const URL = process.env.URL || 'http://localhost:8080/';
-var lastFile = null;
-var timingHistory = [];
-
-function maybePrintStatistics(file, cloneDetector, cloneStore) {
-    if (0 == cloneDetector.numberOfProcessedFiles % STATS_FREQ) {
-        console.log('Processed', cloneDetector.numberOfProcessedFiles, 'files and found', cloneStore.numberOfClones, 'clones.');
-        let timers = Timer.getTimers(file);
-        let str = 'Timers for last file processed: ';
-        for (t in timers) {
-            str += t + ': ' + (timers[t] / (1000n)) + ' µs '
-        }
-        console.log(str);
-        console.log('List of found clones available at', URL);
-    }
-
-    return file;
+  }
 }
 
-function storeTiming(file) {
-    let timers = Timer.getTimers(file);
+const stages = [
+  { key: 'files', name: 'Storing files', identifier: 'Storing files' },
+  { key: 'chunks', name: 'Storing chunks', identifier: 'Storing chunks' },
+  { key: 'candidates', name: 'Identifying candidates', identifier: 'Identifying Clone Candidates' },
+  { key: 'clones', name: 'Expanding candidates', identifier: 'Expanding Candidates' }
+]
+const counts = { files: 0, chunks: 0, candidates: 0, clones: 0 }
+const stageCounts = { files: [], chunks: [], candidates: [], clones: [] }
+let currentStage = 'Waiting'
 
-    timingHistory.push({
-        name: file.name,
-        lines: file.fileCount,
-        total: Number(timers.total / 1000n),
-        match: Number(timers.match / 1000n)
-    });
+app.get('/', (req, res) => {
+  let output = '<h1>All-at-Once Statistics</h1>'
+  output += `<p>Current stage: ${currentStage}</p>`
+  output += `<p>
+		Files: ${counts.files}, ` +
+		`Chunks: ${counts.chunks}, ` +
+    `Candidates: ${counts.candidates}, ` +
+		`Clones: ${counts.clones}</p>`
 
-    return file;
+  for (const stage of stages) {
+    output += `<h2>${stage.name}</h2><ul>`
+    for (const item of stageCounts[stage.key]) {
+      output += `<li>
+					${((item.time - item.startedAt) / 1000).toFixed(1)} seconds:
+					${item.counts[stage.key]} ${stage.key}
+				</li>`
+    }
+    output += '</ul>'
+  }
+
+  res.send(output)
+})
+
+const refreshStats = async () => {
+  const database = mongoose.connection.db
+  if (!database)
+		return
+
+  const [files, chunks, candidates, clones, updates] = await Promise.all([
+    database.collection('files').countDocuments(),
+    database.collection('chunks').countDocuments(),
+    database.collection('candidates').countDocuments(),
+    database.collection('clones').countDocuments(),
+    database.collection('statusUpdates').find({}).sort({ timestamp: 1 }).toArray()
+  ])
+
+  counts.files = files
+  counts.chunks = chunks
+  counts.candidates = candidates
+  counts.clones = clones
+  currentStage = 'Waiting'
+
+	// check if old data still exists and clear if that is the case
+  const lastRead = updates.findLast(update =>
+    Array.isArray(update.message) && String(update.message[0] || '').includes('Reading')
+  )
+  if (lastRead && Date.now() - new Date(lastRead.timestamp).getTime() > 10000) {
+    for (const stage of stages)
+			stageCounts[stage.key] = []
+    return
+  }
+
+  let activeStage
+  let lastUpdateTimestamp
+
+  for (let index = updates.length - 1; index >= 0; index--) {
+    const text = Array.isArray(updates[index].message) ? String(updates[index].message[0] || '') : ''
+    if (text.includes('Summary')) {
+      currentStage = 'Complete'
+      break
+    }
+		if (text.includes('Consolidating')) {
+			currentStage = 'Consolidating clones'
+			break
+		}
+
+    activeStage = stages.find(stage => text.includes(stage.identifier))
+    if (activeStage) {
+      lastUpdateTimestamp = updates[index].timestamp
+      currentStage = activeStage.name
+      break
+    }
+
+    if (text.includes('Reading')) {
+      currentStage = 'Reading files'
+      break
+    }
+  }
+
+  if (activeStage) {
+    stageCounts[activeStage.key].push({
+      time: Date.now(),
+      startedAt: new Date(lastUpdateTimestamp).getTime(),
+      counts: { ...counts }
+    })
+  }
 }
 
-// Processing of the file
-// --------------------
-function processFile(filename, contents) {
-    let cd = new CloneDetector();
-    let cloneStore = CloneStorage.getInstance();
+app.listen(PORT, () => console.log('Listening for monitoring stats on port', PORT))
 
-    return Promise.resolve({name: filename, contents: contents} )
-        //.then( PASS( (file) => console.log('Processing file:', file.name) ))
-        .then( (file) => Timer.startTimer(file, 'total') )
-        .then( (file) => cd.preprocess(file) )
-        .then( (file) => cd.transform(file) )
-        .then( (file) => {
-            file.fileCount = file.lines.length;
-            return file;
-        })
+connectToDatabase().then(async () => {
+  await refreshStats()
+  setInterval(refreshStats, POLLING_DELAY)
+})
 
-        .then( (file) => Timer.startTimer(file, 'match') )
-        .then( (file) => cd.matchDetect(file) )
-        .then( (file) => cloneStore.storeClones(file) )
-        .then( (file) => Timer.endTimer(file, 'match') )
-
-        .then( (file) => cd.storeFile(file) )
-        .then( (file) => Timer.endTimer(file, 'total') )
-        .then( (file) => storeTiming(file) )
-        .then( PASS( (file) => lastFile = file ))
-        .then( PASS( (file) => maybePrintStatistics(file, cd, cloneStore) ))
-    // TODO Store the timers from every file (or every 10th file), create a new landing page /timers
-    // and display more in depth statistics there. Examples include:
-    // average times per file, average times per last 100 files, last 1000 files.
-    // Perhaps throw in a graph over all files.
-        .catch( console.log );
-};
-
-/*
-1. Preprocessing: Remove uninteresting code, determine source and comparison units/granularities
-2. Transformation: One or more extraction and/or transformation techniques are applied to the preprocessed code to obtain an intermediate representation of the code.
-3. Match Detection: Transformed units (and/or metrics for those units) are compared to find similar source units.
-4. Formatting: Locations of identified clones in the transformed units are mapped to the original code base by file location and line number.
-5. Post-Processing and Filtering: Visualisation of clones and manual analysis to filter out false positives
-6. Aggregation: Clone pairs are aggregated to form clone classes or families, in order to reduce the amount of data and facilitate analysis.
-*/
