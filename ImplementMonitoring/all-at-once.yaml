@@ -19,7 +19,7 @@ services:
 
   dbstorage:
     image: mongo
-    restart: always
+    restart: on-failure
     command: --quiet --syslog
     ports:
       - 27017:27017
