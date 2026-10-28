@@ -6,7 +6,7 @@ const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017'
 const DB_NAME = process.env.DB_NAME || 'cloneDetector'
 const getGraph = require('./graph')
 
-const POLLING_DELAY = 1000
+const POLLING_DELAY = 10000
 
 const connectToDatabase = async () => {
   while (true) {
