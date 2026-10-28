@@ -5,8 +5,9 @@ const mongoose = require('mongoose')
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017'
 const DB_NAME = process.env.DB_NAME || 'cloneDetector'
 const getGraph = require('./graph')
+const fs = require('fs/promises')
 
-const POLLING_DELAY = 10000
+const POLLING_DELAY = 1000
 
 const connectToDatabase = async () => {
   while (true) {
@@ -30,6 +31,8 @@ const counts = { files: 0, chunks: 0, candidates: 0, clones: 0 }
 const stageCounts = { files: [], chunks: [], candidates: [], clones: [] }
 let currentStage = 'Waiting'
 let lastRunTimeStamp = null
+let statisticsFile = null
+let refreshInProgress = false
 
 app.get('/', (req, res) => {
   let output = '<h1>All-at-Once Statistics</h1><p><a href="/graph">View graphs</a></p>'
@@ -114,6 +117,7 @@ const refreshStats = async () => {
 			stageCounts[stage.key] = []
     
     lastRunTimeStamp = lastRead.timestamp
+    statisticsFile = `/data/statistics-${lastRunTimeStamp}.jsonl`
   }
 
   let activeStage
@@ -144,18 +148,41 @@ const refreshStats = async () => {
   }
 
   if (activeStage) {
-    stageCounts[activeStage.key].push({
+    const sample = {
       time: Date.now(),
       startedAt: new Date(lastUpdateTimestamp).getTime(),
       counts: { ...counts }
-    })
+    }
+
+    stageCounts[activeStage.key].push(sample)
+
+    await fs.appendFile(statisticsFile, JSON.stringify({
+      timestamp: new Date(sample.time).toISOString(),
+      stage: activeStage.key,
+      counts: sample.counts
+    }) + '\n')
   }
 }
 
+
+const refresh = async () => {
+  if (refreshInProgress)
+    return
+
+  refreshInProgress = true
+
+  try {
+    await refreshStats()
+  } catch (error) {
+    console.warn('Could not refresh monitor', error.message)
+  } finally {
+    refreshInProgress = false
+  }
+}
 app.listen(PORT, () => console.log('Listening for monitoring stats on port', PORT))
 
 connectToDatabase().then(async () => {
-  await refreshStats()
-  setInterval(refreshStats, POLLING_DELAY)
+  await refresh()
+  setInterval(refresh, POLLING_DELAY)
 })
 

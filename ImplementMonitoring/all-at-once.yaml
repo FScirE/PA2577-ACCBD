@@ -33,6 +33,8 @@ services:
     image: monitortool
     depends_on:
       - dbstorage
+    volumes:
+      - monitor-data:/data
     ports:
       - 8000:3000
     environment:
@@ -44,3 +46,4 @@ volumes:
   dbconfig:
   qc-volume:
     external: true
+  monitor-data:

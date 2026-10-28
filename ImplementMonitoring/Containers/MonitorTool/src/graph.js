@@ -17,7 +17,7 @@ function getGraph(timingHistory, collname) {
   }).filter(time => time.rate !== null)
 
   const rollingMedianRates = rates.map((time, index) => {
-    const window = rates.slice(Math.max(0, index - 20), index +1)
+    const window = rates.slice(Math.max(0, index - 59), index + 1)
     return {
       ...time,
       median: median(window.map(item => item.rate))
