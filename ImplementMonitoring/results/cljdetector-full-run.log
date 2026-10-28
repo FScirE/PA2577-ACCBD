@@ -1,0 +1,13 @@
+clone-detector-1  | WARNING: random-uuid already refers to: #'clojure.core/random-uuid in namespace: monger.util, being replaced by: #'monger.util/random-uuid
+clone-detector-1  | 2026-10-28T13:01:35.782196105 (Clearing database...)
+clone-detector-1  | 2026-10-28T13:01:36.153351102 (Reading and Processing files...)
+clone-detector-1  | 2026-10-28T13:01:36.196734143 (Storing files...)
+clone-detector-1  | 2026-10-28T13:04:15.482154038 (Storing chunks of size 20 ...)
+clone-detector-1  | 2026-10-28T14:18:31.598173469 (Identifying Clone Candidates...)
+clone-detector-1  | 2026-10-28T17:28:59.103420044 (Found 586086 candidates)
+clone-detector-1  | 2026-10-28T17:28:59.143764838 (Expanding Candidates...)
+clone-detector-1  | 2026-10-28T20:50:54.548129722 (Summary)
+clone-detector-1  | db contains 162896 files
+clone-detector-1  | db contains 18211863 chunks
+clone-detector-1  | db contains 0 candidates
+clone-detector-1  | db contains 24961 clones
