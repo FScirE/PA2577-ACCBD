@@ -4,6 +4,7 @@ const PORT = 3000
 const mongoose = require('mongoose')
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017'
 const DB_NAME = process.env.DB_NAME || 'cloneDetector'
+const getGraph = require('./graph')
 
 const POLLING_DELAY = 1000
 
@@ -28,9 +29,10 @@ const stages = [
 const counts = { files: 0, chunks: 0, candidates: 0, clones: 0 }
 const stageCounts = { files: [], chunks: [], candidates: [], clones: [] }
 let currentStage = 'Waiting'
+let lastRunTimeStamp = null
 
 app.get('/', (req, res) => {
-  let output = '<h1>All-at-Once Statistics</h1>'
+  let output = '<h1>All-at-Once Statistics</h1><p><a href="/graph">View graphs</a></p>'
   output += `<p>Current stage: ${currentStage}</p>`
   output += `<p>
 		Files: ${counts.files}, ` +
@@ -39,18 +41,49 @@ app.get('/', (req, res) => {
 		`Clones: ${counts.clones}</p>`
 
   for (const stage of stages) {
-    output += `<h2>${stage.name}</h2><ul>`
-    for (const item of stageCounts[stage.key]) {
-      output += `<li>
-					${((item.time - item.startedAt) / 1000).toFixed(1)} seconds:
-					${item.counts[stage.key]} ${stage.key}
-				</li>`
+    const timingHistory = stageCounts[stage.key]
+
+    output += `<h2>${stage.name}</h2>`
+
+    if (timingHistory.length >= 2) {
+      const first = timingHistory[0]
+      const last = timingHistory[timingHistory.length - 1]
+
+      const time = (last.time - first.time) / 1000
+      const units = last.counts[stage.key] - first.counts[stage.key]
+
+      if (time > 0) {
+        output += `<p>Average: ${(units / time)}
+          ${stage.key}/second</p>`
+      }
+
+      if (units > 0) {
+        output += `<p>Average time per unit:
+        ${(time / units)} seconds</p>`
+      }
     }
-    output += '</ul>'
   }
 
   res.send(output)
 })
+
+
+app.get('/graph', (req, res) => {
+  let output = '<h1>Processing graphs</h1><p><a href="/">Back to statistics</a></p>'
+
+  for (const stage of stages) {
+    output += `<h2>${stage.name}</h2>`
+    output += getGraph(stageCounts[stage.key], stage.key)
+  }
+
+  res.send(output)
+})
+
+function getMessage(update) {
+  return Array.isArray(update.message)
+  ? update.message.join(' ')
+  : String(update.message || '')
+}
 
 const refreshStats = async () => {
   const database = mongoose.connection.db
@@ -73,19 +106,21 @@ const refreshStats = async () => {
 
 	// check if old data still exists and clear if that is the case
   const lastRead = updates.findLast(update =>
-    Array.isArray(update.message) && String(update.message[0] || '').includes('Reading')
+    getMessage(update).includes('Reading')
   )
-  if (lastRead && Date.now() - new Date(lastRead.timestamp).getTime() > 10000) {
+
+  if (lastRead && lastRead.timestamp !== lastRunTimeStamp) {
     for (const stage of stages)
 			stageCounts[stage.key] = []
-    return
+    
+    lastRunTimeStamp = lastRead.timestamp
   }
 
   let activeStage
   let lastUpdateTimestamp
 
   for (let index = updates.length - 1; index >= 0; index--) {
-    const text = Array.isArray(updates[index].message) ? String(updates[index].message[0] || '') : ''
+    const text = getMessage(updates[index])
     if (text.includes('Summary')) {
       currentStage = 'Complete'
       break

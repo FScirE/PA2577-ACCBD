@@ -4,24 +4,33 @@ function median(values) {
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2
 }
 
-function getGraph(timingHistory) {
-  const timingPerFile = timingHistory.slice(2).map(time => ({
-    ...time,
-    total: time.lines > 0 ? time.total / time.lines : 0,
-    match: time.lines > 0 ? time.match / time.lines : 0
-  }))
-  const rollingMedianTimingPerLine = timingPerFile.slice(7).map((time, index) => {
-    const window = timingPerFile.slice(index, index + 21)
+function getGraph(timingHistory, collname) {
+  const rates = timingHistory.slice(1).map((time, index) => {
+    const previous = timingHistory[index]
+    const duration = (time.time - previous.time) / 1000
+    const units = time.counts[collname] - previous.counts[collname]
+
+    return {
+      time: time.time,
+      rate: duration > 0  && units >= 0 ? units / duration : null
+    }
+  }).filter(time => time.rate !== null)
+
+  const rollingMedianRates = rates.map((time, index) => {
+    const window = rates.slice(Math.max(0, index - 20), index +1)
     return {
       ...time,
-      total: median(window.map(item => item.total)),
-      match: median(window.map(item => item.match))
+      median: median(window.map(item => item.rate))
     }
   })
+  const values = rollingMedianRates
+    .map(time => [time.rate, time.median])
+    .flat()
 
-  const values = rollingMedianTimingPerLine.map(time => [time.total, time.match]).flat()
-  const maxTime = Math.max(0, ...values)
-  const barWidth = value => !maxTime ? 0 : (value / maxTime) * 100
+  const maxRate = values.reduce((maximum, value) =>
+    Math.max(maximum, value), 0)
+
+  const barWidth = value => !maxRate ? 0 : (value / maxRate) * 100
 
   let output = `<style>
     #graphContainer {
@@ -41,20 +50,21 @@ function getGraph(timingHistory) {
   </style>`
 
   output += `<div id="graphContainer">
-    <h3>Rolling median timing per line over time (excluding test files)</h3>
+    <h3>${collname} processed per second </h3>
     <p class="timingLegend">
-      <span class="totalBar">&nbsp;&nbsp;</span> Total<br>
-      <span class="matchBar">&nbsp;&nbsp;</span> Match
+      <span class="totalBar">&nbsp;&nbsp;</span> Interval rate<br>
+      <span class="matchBar">&nbsp;&nbsp;</span> Rolling median
     </p>
   `
 
-  if (rollingMedianTimingPerLine.length === 0) {
+  if (rollingMedianRates.length === 0) {
     output += '<p>No timing data yet.</p>'
   } else {
-    for (let time of rollingMedianTimingPerLine) {
+    for (let time of rollingMedianRates) {
+      const duration = (time.time - timingHistory[0].time) / 1000
       output += `<div class="timingRow">
-        <div class="timingBar totalBar" style="width:${barWidth(time.total)}%" title="Total: ${time.total.toFixed(1)}µs/line"></div>
-        <div class="timingBar matchBar" style="width:${barWidth(time.match)}%" title="Match: ${time.match.toFixed(1)}µs/line"></div>
+        <div class="timingBar totalBar" style="width:${barWidth(time.rate)}%" title="Rate: ${time.rate.toFixed(2)} ${collname}/s"></div>
+        <div class="timingBar matchBar" style="width:${barWidth(time.median)}%" title="Rolling median: ${time.median.toFixed(2)} ${collname}/s"></div>
       </div>`
     }
   }
